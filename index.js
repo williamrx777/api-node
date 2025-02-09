@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql2');
+const { Pool } = require('pg');
 const app = express();
 require('dotenv').config();
 const swaggerUi = require('swagger-ui-express');
@@ -43,18 +43,17 @@ app.use((req, res, next) => {
 });
 
 // Função para obter a conexão com o banco de dados
-function getDbConnection() {
-  return mysql.createConnection({
+const pool = new Pool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000
   });
-}
+
 
 /**
  * @swagger
