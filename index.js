@@ -44,8 +44,12 @@ app.use((req, res, next) => {
 
 // Configuração do Pool do PostgreSQL utilizando a connection string fornecida
 const pool = new Pool({
-  connectionString: "postgresql://api_2yip_user:f86s57kEqc7XE7fyE6HJm9KitNBC7edZ@dpg-cujuq0bv2p9s7387506g-a.oregon-postgres.render.com/api_2yip"
+  connectionString: "postgresql://api_2yip_user:f86s57kEqc7XE7fyE6HJm9KitNBC7edZ@dpg-cujuq0bv2p9s7387506g-a.db.render.com/api_2yip",
+  ssl: {
+    rejectUnauthorized: false  // Permite conexão mesmo sem certificado verificado
+  }
 });
+
 
 /**
  * @swagger
