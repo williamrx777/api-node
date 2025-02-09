@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configuração do Pool do PostgreSQL utilizando a connection string fornecida
+// Configuração do Pool do PostgreSQL utilizando a connection string e SSL
 const pool = new Pool({
   connectionString: "postgresql://api_2yip_user:f86s57kEqc7XE7fyE6HJm9KitNBC7edZ@dpg-cujuq0bv2p9s7387506g-a.oregon-postgres.render.com/api_2yip",
   ssl: {
@@ -50,6 +50,29 @@ const pool = new Pool({
   }
 });
 
+// Função para verificar e criar a tabela "produto" se não existir
+const createTableIfNotExists = async () => {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS produto (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR(255) NOT NULL,
+      quantidade INTEGER NOT NULL,
+      preco DECIMAL(10, 2) NOT NULL,
+      imagem VARCHAR(2000) NOT NULL
+    );
+  `;
+  try {
+    await pool.query(createTableQuery);
+    console.log("Tabela 'produto' verificada/criada com sucesso.");
+  } catch (error) {
+    console.error("Erro ao verificar/criar a tabela 'produto':", error);
+  }
+};
+
+// Executa a verificação/criação da tabela ao iniciar a aplicação
+createTableIfNotExists();
+
+// Endpoints da API
 
 /**
  * @swagger
