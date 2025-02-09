@@ -16,7 +16,7 @@ const options = {
     },
     servers: [
       {
-        url: 'https://api-node-sd7z.onrender.com/api/produto'
+        url: 'https://api-node-sd7z.onrender.com/'
       }
     ]
   },
