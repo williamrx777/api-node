@@ -27,7 +27,7 @@ const options = {
 const specs = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-// Middlewares para fazer o parse do corpo da requisição
+// Middlewares para parse do corpo da requisição
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -42,16 +42,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configuração do pool do PostgreSQL
+// Configuração do Pool do PostgreSQL utilizando a connection string fornecida
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+  connectionString: "postgresql://api_2yip_user:f86s57kEqc7XE7fyE6HJm9KitNBC7edZ@dpg-cujuq0bv2p9s7387506g-a/api_2yip"
 });
 
 /**
@@ -131,16 +124,12 @@ app.get('/api/produto/:id', async (req, res) => {
  *             properties:
  *               nome:
  *                 type: string
- *                 description: Nome do produto.
  *               quantidade:
  *                 type: number
- *                 description: Quantidade do produto.
  *               preco:
  *                 type: number
- *                 description: Preço do produto.
  *               imagem:
  *                 type: string
- *                 description: URL da imagem do produto.
  *     responses:
  *       201:
  *         description: Produto criado com sucesso.
@@ -161,7 +150,7 @@ app.post('/api/produto', async (req, res) => {
       'INSERT INTO produto (nome, quantidade, preco, imagem) VALUES ($1, $2, $3, $4)',
       [nome, quantidade, preco, imagem]
     );
-    res.status(201).json({ message: 'Dados inseridos com sucesso' });
+    res.status(201).json({ message: 'Produto criado com sucesso' });
   } catch (error) {
     console.error('Erro ao inserir dados:', error);
     res.status(500).json({ message: 'Erro ao inserir dados' });
@@ -216,7 +205,7 @@ app.put('/api/produto/:id', async (req, res) => {
       'UPDATE produto SET nome = $1, quantidade = $2, preco = $3, imagem = $4 WHERE id = $5',
       [nome, quantidade, preco, imagem, req.params.id]
     );
-    res.status(200).json({ message: 'Dados atualizados com sucesso' });
+    res.status(200).json({ message: 'Produto atualizado com sucesso' });
   } catch (error) {
     console.error('Erro ao atualizar dados:', error);
     res.status(500).json({ message: 'Erro ao atualizar dados' });
@@ -245,7 +234,7 @@ app.put('/api/produto/:id', async (req, res) => {
 app.delete('/api/produto/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM produto WHERE id = $1', [req.params.id]);
-    res.status(200).json({ message: 'Dados excluídos com sucesso' });
+    res.status(200).json({ message: 'Produto excluído com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir dados:', error);
     res.status(500).json({ message: 'Erro ao excluir dados' });
