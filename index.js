@@ -42,18 +42,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// Função para obter a conexão com o banco de dados
+// Configuração do pool do PostgreSQL
 const pool = new Pool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000
-  });
-
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
+});
 
 /**
  * @swagger
@@ -73,17 +72,14 @@ const pool = new Pool({
  *       500:
  *         description: Erro ao buscar os dados.
  */
-app.get('/api/produto', (req, res) => {
-  const connection = getDbConnection();
-  connection.query('SELECT * FROM produto', (error, results) => {
-    if (error) {
-      console.error('Erro ao buscar dados:', error);
-      res.status(500).send({ message: 'Erro ao buscar dados' });
-    } else {
-      res.send(results);
-    }
-    connection.end();
-  });
+app.get('/api/produto', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM produto');
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error('Erro ao buscar dados:', error);
+    res.status(500).json({ message: 'Erro ao buscar dados' });
+  }
 });
 
 /**
@@ -105,17 +101,14 @@ app.get('/api/produto', (req, res) => {
  *       500:
  *         description: Erro ao buscar os dados.
  */
-app.get('/api/produto/:id', (req, res) => {
-  const connection = getDbConnection();
-  connection.query('SELECT * FROM produto WHERE id = ?', [req.params.id], (error, results) => {
-    if (error) {
-      console.error('Erro ao buscar dados:', error);
-      res.status(500).send({ message: 'Erro ao buscar dados' });
-    } else {
-      res.send(results);
-    }
-    connection.end();
-  });
+app.get('/api/produto/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM produto WHERE id = $1', [req.params.id]);
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error('Erro ao buscar dados:', error);
+    res.status(500).json({ message: 'Erro ao buscar dados' });
+  }
 });
 
 /**
@@ -156,27 +149,23 @@ app.get('/api/produto/:id', (req, res) => {
  *       500:
  *         description: Erro ao inserir os dados.
  */
-app.post('/api/produto', (req, res) => {
+app.post('/api/produto', async (req, res) => {
   const { nome, quantidade, preco, imagem } = req.body;
   
-  // Validação básica dos dados recebidos
   if (!nome || !quantidade || !preco || !imagem) {
     return res.status(400).json({ message: 'Dados incompletos. Informe nome, quantidade, preco e imagem.' });
   }
   
-  const connection = getDbConnection();
-  connection.query(
-    'INSERT INTO produto (nome, quantidade, preco, imagem) VALUES (?, ?, ?, ?)',
-    [nome, quantidade, preco, imagem],
-    (error, results) => {
-      connection.end();
-      if (error) {
-        console.error('Erro ao inserir dados:', error);
-        return res.status(500).json({ message: 'Erro ao inserir dados' });
-      }
-      return res.status(201).json({ message: 'Dados inseridos com sucesso' });
-    }
-  );
+  try {
+    await pool.query(
+      'INSERT INTO produto (nome, quantidade, preco, imagem) VALUES ($1, $2, $3, $4)',
+      [nome, quantidade, preco, imagem]
+    );
+    res.status(201).json({ message: 'Dados inseridos com sucesso' });
+  } catch (error) {
+    console.error('Erro ao inserir dados:', error);
+    res.status(500).json({ message: 'Erro ao inserir dados' });
+  }
 });
 
 /**
@@ -220,21 +209,18 @@ app.post('/api/produto', (req, res) => {
  *       500:
  *         description: Erro ao atualizar os dados.
  */
-app.put('/api/produto/:id', (req, res) => {
+app.put('/api/produto/:id', async (req, res) => {
   const { nome, quantidade, preco, imagem } = req.body;
-  const connection = getDbConnection();
-  connection.query(
-    'UPDATE produto SET nome = ?, quantidade = ?, preco = ?, imagem = ? WHERE id = ?',
-    [nome, quantidade, preco, imagem, req.params.id],
-    (error, results) => {
-      connection.end();
-      if (error) {
-        console.error('Erro ao atualizar dados:', error);
-        return res.status(500).json({ message: 'Erro ao atualizar dados' });
-      }
-      return res.status(200).json({ message: 'Dados atualizados com sucesso' });
-    }
-  );
+  try {
+    await pool.query(
+      'UPDATE produto SET nome = $1, quantidade = $2, preco = $3, imagem = $4 WHERE id = $5',
+      [nome, quantidade, preco, imagem, req.params.id]
+    );
+    res.status(200).json({ message: 'Dados atualizados com sucesso' });
+  } catch (error) {
+    console.error('Erro ao atualizar dados:', error);
+    res.status(500).json({ message: 'Erro ao atualizar dados' });
+  }
 });
 
 /**
@@ -256,18 +242,17 @@ app.put('/api/produto/:id', (req, res) => {
  *       500:
  *         description: Erro ao excluir os dados.
  */
-app.delete('/api/produto/:id', (req, res) => {
-  const connection = getDbConnection();
-  connection.query('DELETE FROM produto WHERE id = ?', [req.params.id], (error, results) => {
-    connection.end();
-    if (error) {
-      console.error('Erro ao excluir dados:', error);
-      return res.status(500).json({ message: 'Erro ao excluir dados' });
-    }
-    return res.status(200).json({ message: 'Dados excluídos com sucesso' });
-  });
+app.delete('/api/produto/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM produto WHERE id = $1', [req.params.id]);
+    res.status(200).json({ message: 'Dados excluídos com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir dados:', error);
+    res.status(500).json({ message: 'Erro ao excluir dados' });
+  }
 });
 
-app.listen(3000, () => {
-  console.log('Servidor rodando na porta 3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
